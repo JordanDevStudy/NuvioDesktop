@@ -121,10 +121,11 @@ internal fun MainTabsDestination(
         val isSidebarHovered by sidebarHoverSource.collectIsHoveredAsState()
         var isProfileStackVisible by remember { mutableStateOf(false) }
 
+        // Harbor-style: the desktop sidebar stays open with labels by default.
+        // Only the COMPACT style collapses it to an icon rail that expands on hover.
         val isSidebarExpanded = when (navBarStyleSetting) {
-            NavBarStyle.EXPANDED -> true
-            NavBarStyle.COMPACT -> isProfileStackVisible
-            else -> isSidebarHovered || isProfileStackVisible // ADAPTIVE
+            NavBarStyle.COMPACT -> isSidebarHovered || isProfileStackVisible
+            else -> true
         }
 
         val animatedSidebarWidth by animateDpAsState(
@@ -133,7 +134,7 @@ internal fun MainTabsDestination(
             label = "desktop_sidebar_width",
         )
 
-        val isSidebarAlwaysExpanded = useDesktopSidebar && navBarStyleSetting == NavBarStyle.EXPANDED
+        val isSidebarAlwaysExpanded = useDesktopSidebar && navBarStyleSetting != NavBarStyle.COMPACT
         val contentStartPadding = if (useDesktopSidebar) {
             if (isSidebarAlwaysExpanded) DesktopSidebarExpandedWidth else DesktopSidebarCollapsedWidth
         } else {

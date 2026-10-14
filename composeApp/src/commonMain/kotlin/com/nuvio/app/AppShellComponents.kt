@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -114,9 +115,12 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 internal val DesktopSidebarCollapsedWidth = 68.dp
-internal val DesktopSidebarExpandedWidth = 192.dp
-private val DesktopSidebarExpandedContentWidth = 156.dp
-private val DesktopSidebarItemHeight = 56.dp
+internal val DesktopSidebarExpandedWidth = 216.dp
+private val DesktopSidebarExpandedContentWidth = 180.dp
+private val DesktopSidebarNavTopGap = 20.dp
+private val DesktopSidebarBottomPadding = 20.dp
+private val DesktopSidebarDividerColor = Color(0xFF18181D)
+private val DesktopSidebarItemHeight = 52.dp
 private val DesktopSidebarIconSlotSize = 38.dp
 private val DesktopSidebarIconSize = NuvioTokens.Icon.lg
 private val DesktopSidebarProfileStackRowHeight = 44.dp
@@ -761,18 +765,16 @@ internal fun DesktopHoverSidebar(
                 0.dp
             }
             val profileStackTop = profileTopPadding + DesktopSidebarItemHeight + DesktopSidebarProfileStackTopGap
-            val minNavTop = if (profileStackVisible) {
+            // Harbor-style rail: navigation sits right under the profile at the top,
+            // and Settings is pinned to the bottom of the sidebar.
+            val navTop = profileTopPadding + DesktopSidebarItemHeight + DesktopSidebarNavTopGap
+            val navTopWithStack = if (profileStackVisible) {
                 profileStackTop + profileStackHeight + DesktopSidebarProfileStackNavGap
             } else {
-                0.dp
+                navTop
             }
-            val navColumnHeight = DesktopSidebarItemHeight * AppScreenTab.entries.size
-            val centeredNavTop = ((maxHeight - navColumnHeight) / 2).coerceAtLeast(0.dp)
-            val availableNavOffset = (maxHeight - navColumnHeight - centeredNavTop).coerceAtLeast(0.dp)
-            val navColumnOffset = (minNavTop - centeredNavTop)
-                .coerceIn(0.dp, availableNavOffset)
-            val animatedNavColumnOffset by animateDpAsState(
-                targetValue = navColumnOffset,
+            val animatedNavTop by animateDpAsState(
+                targetValue = navTopWithStack,
                 animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
                 label = "desktop_sidebar_nav_offset",
             )
@@ -814,8 +816,8 @@ internal fun DesktopHoverSidebar(
 
             Column(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = animatedNavColumnOffset)
+                    .align(Alignment.TopCenter)
+                    .padding(top = animatedNavTop)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -858,6 +860,14 @@ internal fun DesktopHoverSidebar(
                         tint = color,
                     )
                 }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = DesktopSidebarBottomPadding)
+                    .fillMaxWidth(),
+            ) {
                 DesktopSidebarItem(
                     label = stringResource(Res.string.compose_settings_page_root),
                     selected = selectedTab == AppScreenTab.Settings,
@@ -872,6 +882,15 @@ internal fun DesktopHoverSidebar(
                     )
                 }
             }
+
+            // Hairline divider on the right edge, separating the rail from content.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(DesktopSidebarDividerColor),
+            )
         }
     }
 }
@@ -945,35 +964,48 @@ private fun DesktopSidebarItem(
     icon: @Composable (Color) -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
-    val contentColor = if (selected) tokens.colors.textPrimary else tokens.colors.textMuted
-    val iconColor = if (selected) tokens.colors.onAccent else contentColor
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val contentColor by animateColorAsState(
+        targetValue = when {
+            selected -> tokens.colors.accent
+            hovered -> tokens.colors.textPrimary
+            else -> tokens.colors.textMuted
+        },
+        animationSpec = tween(160),
+        label = "desktop_sidebar_item_content",
+    )
+    val rowColor by animateColorAsState(
+        targetValue = when {
+            selected -> tokens.colors.accent.copy(alpha = 0.13f)
+            hovered -> Color.White.copy(alpha = 0.05f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(160),
+        label = "desktop_sidebar_item_row",
+    )
 
     Surface(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(DesktopSidebarItemHeight)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        color = Color.Transparent,
-        shape = RoundedCornerShape(16.dp),
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        color = rowColor,
+        shape = RoundedCornerShape(12.dp),
+        interactionSource = interactionSource,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 9.dp),
+                .padding(start = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
+            Box(
                 modifier = Modifier.size(DesktopSidebarIconSlotSize),
-                color = if (selected) tokens.colors.accent else Color.Transparent,
-                shape = RoundedCornerShape(14.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    icon(iconColor)
-                }
+                icon(contentColor)
             }
             AnimatedVisibility(
                 visible = expanded,
@@ -989,10 +1021,12 @@ private fun DesktopSidebarItem(
                 ),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        ),
                         color = contentColor,
                         maxLines = 1,
                         softWrap = false,

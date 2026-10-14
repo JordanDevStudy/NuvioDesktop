@@ -170,6 +170,20 @@ object ThemeColors {
         backgroundCard = Color(0xFF241A1F),
     )
 
+    val Ember = ThemeColorPalette(
+        secondary = Color(0xFFF47521),
+        secondaryVariant = Color(0xFFD9561A),
+        accentGradient = listOf(Color(0xFFD9561A), Color(0xFFF47521), Color(0xFFFF9A57)),
+        nativeAccentHex = "#F47521",
+        onSecondary = Color(0xFF09090B),
+        onSecondaryVariant = Color.White,
+        focusRing = Color(0xFFFF9A57),
+        focusBackground = Color(0xFF3A1E0E),
+        background = Color(0xFF09090B),
+        backgroundElevated = Color(0xFF121216),
+        backgroundCard = Color(0xFF1A1A20),
+    )
+
     val White = ThemeColorPalette(
         secondary = Color(0xFFF5F5F5),
         secondaryVariant = Color(0xFFE0E0E0),
@@ -199,6 +213,7 @@ object ThemeColors {
         AppTheme.EMERALD -> Emerald
         AppTheme.AMBER -> Amber
         AppTheme.ROSE -> Rose
+        AppTheme.EMBER -> Ember
         AppTheme.WHITE -> White
     }
 }

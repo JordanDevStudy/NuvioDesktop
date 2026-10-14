@@ -930,6 +930,7 @@
     <string name="theme_rose">Rosa</string>
     <string name="theme_violet">Violeta</string>
     <string name="theme_white">Branco</string>
+    <string name="theme_ember">Brasa</string>
     <string name="player_next_episode">Próximo Episódio</string>
     <string name="player_next_episode_finding_source">Buscando fonte…</string>
     <string name="player_next_episode_playing_via_countdown">Reproduzindo via %1$s em %2$ds…</string>
